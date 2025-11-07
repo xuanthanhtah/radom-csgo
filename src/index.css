@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* App base styles */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-white text-gray-900;
+}
+
+/* Case opener styles */
+.case-strip-item {
+  flex: 0 0 auto;
+}
