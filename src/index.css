@@ -54,5 +54,6 @@ body {
   /* ensure rotation happens around the element center */
   transform-origin: center center;
   -webkit-transform-origin: center center;
-  animation: spin-slow 1s linear infinite;
+  /* run exactly once and keep the final rotated state */
+  animation: spin-slow 3s linear 1 forwards;
 }

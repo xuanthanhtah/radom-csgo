@@ -27,20 +27,29 @@ export default function ResultModal({ result, onClose }: Props) {
       comp.animationName || comp.getPropertyValue("animation-name");
 
     let rafId: number | null = null;
-    let angle = 0;
 
-    // fallback nếu KHÔNG có animation từ CSS
+    // fallback nếu KHÔNG có animation từ CSS -> animate one rotation over 1s using timestamps
     if (!animName || animName === "none") {
-      const step = () => {
-        angle = (angle + 4) % 360;
-        img.style.transform = `rotate(${angle}deg)`;
-        rafId = requestAnimationFrame(step);
+      let start: number | null = null;
+      const duration = 1000; // 1s to match CSS
+
+      const step = (ts: number) => {
+        if (!start) start = ts;
+        const elapsed = ts - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const deg = progress * 360;
+        img.style.transform = `rotate(${deg}deg)`;
+        if (progress < 1) {
+          rafId = requestAnimationFrame(step);
+        } else {
+          rafId = null;
+        }
       };
       rafId = requestAnimationFrame(step);
     }
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafId !== null) cancelAnimationFrame(rafId);
       if (img) img.style.transform = "";
     };
   }, [result]);
@@ -61,7 +70,7 @@ export default function ResultModal({ result, onClose }: Props) {
               alt={result.name}
               className="w-64 h-64 object-cover rounded shadow-2xl animate-spin-slow"
               style={{
-                animation: "spin-slow 1s linear infinite",
+                /* CSS now defines a single-iteration forwards animation */
                 transformOrigin: "center",
               }}
             />
