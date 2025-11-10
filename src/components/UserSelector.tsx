@@ -75,10 +75,10 @@ export default function UserSelector({
                 if (e.key === "Enter" || e.key === " ") onToggle(u.id);
               }}
               className={
-                `w-full cursor-pointer select-none p-3 rounded border bg-white flex flex-col items-center justify-center text-center transition-shadow ` +
+                `w-full cursor-pointer select-none p-3 rounded border flex flex-col items-center justify-center text-center transition-transform transform ` +
                 (selected
-                  ? "border-yellow-400 shadow-md bg-yellow-50"
-                  : "border-gray-200 hover:shadow-sm")
+                  ? "ring-8 ring-kid-yellow/40 shadow-xl bg-gradient-to-br from-kid-yellow/30 to-kid-orange/20 scale-105"
+                  : "bg-white border-gray-200 hover:shadow-sm hover:scale-105")
               }
             >
               {src ? (

@@ -21,7 +21,11 @@ export default function ResultModal({ result, onClose }: Props) {
             <img
               src={result.image}
               alt={result.name}
-              className="w-64 h-64 object-cover rounded"
+              className="w-64 h-64 object-cover rounded shadow-2xl transform origin-center animate-spin-slow"
+              style={{
+                animation: "spin-slow 1s linear infinite",
+                transformOrigin: "center",
+              }}
             />
           ) : (
             <div className="w-64 h-64 bg-gray-100" />

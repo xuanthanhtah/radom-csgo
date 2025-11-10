@@ -30,7 +30,11 @@ export default function ParticipantControls({
           />
         </div>
         <div>
-          <Button onClick={() => onAdd(selectedUser)} disabled={!selectedUser}>
+          <Button
+            className="playful-btn bg-gradient-to-r from-kid-blue to-kid-purple"
+            onClick={() => onAdd(selectedUser)}
+            disabled={!selectedUser}
+          >
             Thêm người chơi
           </Button>
         </div>

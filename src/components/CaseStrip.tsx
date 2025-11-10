@@ -7,6 +7,7 @@ type Props = {
   itemWidth: number;
   initialTranslate: number;
   containerWidth?: number;
+  itemGap?: number;
 };
 
 export default function CaseStrip({
@@ -15,35 +16,39 @@ export default function CaseStrip({
   itemWidth,
   initialTranslate,
   containerWidth,
+  itemGap,
 }: Props) {
   return (
     <div className="relative">
       <div
-        className="overflow-hidden border rounded"
+        className="overflow-hidden rounded-3xl playful-card"
         // Use full width of the parent but cap it with `maxWidth` so the
         // strip doesn't force the page to grow when many items are selected.
         style={{
           height: 180,
-          width: "100%",
+          width: "auto",
           maxWidth: containerWidth ?? "100%",
         }}
       >
         <div
           ref={stripRef}
           className={`flex items-center h-full`}
-          style={{ transform: `translateX(-${initialTranslate}px)` }}
+          style={{
+            transform: `translateX(-${initialTranslate}px)`,
+            gap: itemGap ?? 0,
+          }}
         >
           {repeated.map((it) => (
             <div
               key={it.id}
-              className="flex-shrink-0 mx-2 bg-white rounded shadow-sm flex flex-col items-center justify-center"
-              style={{ width: itemWidth - 16, height: 140 }}
+              className="flex-shrink-0 bg-gradient-to-br from-kid-yellow/30 to-kid-pink/10 hover:scale-105 transform transition-transform duration-300 rounded-xl shadow-lg flex flex-col items-center justify-center"
+              style={{ width: itemWidth, height: 140 }}
             >
               {it.image ? (
                 <img
                   src={it.image}
                   alt={it.name}
-                  className="w-full h-28 object-cover rounded-t"
+                  className="w-full h-28 object-cover rounded-t animate-float-slow"
                 />
               ) : (
                 <div className="w-full h-28 bg-gray-100 flex items-center justify-center">
@@ -55,8 +60,8 @@ export default function CaseStrip({
           ))}
         </div>
       </div>
-      <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-full w-2 pointer-events-none">
-        <div className="w-2 h-full bg-gradient-to-b from-transparent via-yellow-300 to-transparent opacity-80 rounded" />
+      <div className="absolute left-1/2 top-0 transform -translate-x-1/2 h-full w-4 pointer-events-none">
+        <div className="marker-glow animate-pulse-slow" />
       </div>
     </div>
   );

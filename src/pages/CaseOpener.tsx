@@ -21,6 +21,8 @@ export default function CaseOpener(): JSX.Element {
   const stripRef = useRef<HTMLDivElement | null>(null);
 
   const ITEM_WIDTH = 160;
+  const ITEM_GAP = 24; // px gap between items (matches Tailwind mx-3 total)
+  const ITEM_STEP = ITEM_WIDTH + ITEM_GAP; // full step from one item left edge to next
   // REPEAT controls how many times the items are repeated to form the strip.
   // We'll compute it dynamically below (after `items`) so we don't create many
   // duplicates when only a few items are selected.
@@ -148,7 +150,7 @@ export default function CaseOpener(): JSX.Element {
       Math.floor(REPEAT / 2) * items.length + (chosenLocalIndex || 0);
     const rotations = 6; // full cycles before landing
     const finalIndex = baseIndex + items.length * rotations;
-    const final = Math.max(0, finalIndex * ITEM_WIDTH - centerOffset);
+    const final = Math.max(0, finalIndex * ITEM_STEP - centerOffset);
 
     const repeatedSnapshot = repeated.slice();
 
@@ -202,7 +204,7 @@ export default function CaseOpener(): JSX.Element {
           0,
           items.findIndex((i) => i.name === winner.name)
         );
-      const baseMove = Math.max(0, baseIndex * ITEM_WIDTH - centerOffset);
+      const baseMove = Math.max(0, baseIndex * ITEM_STEP - centerOffset);
       strip.style.transition = "none";
       strip.style.transform = `translateX(-${baseMove}px)`;
     }, 4200);
@@ -212,69 +214,82 @@ export default function CaseOpener(): JSX.Element {
   // the container off-screen. Keep at least one item width, but cap to 900px
   // (adjustable) for large selections.
   const containerVisibleWidth = Math.max(
-    Math.min(items.length * ITEM_WIDTH, 900),
-    ITEM_WIDTH
+    Math.min(items.length * ITEM_STEP, 900),
+    ITEM_STEP
   );
 
   // Offset to center an item under the fixed marker in the middle of the
   // container. We subtract this from translate values so the chosen item's
   // center aligns with the marker instead of the left edge.
-  const centerOffset = Math.max((containerVisibleWidth - ITEM_WIDTH) / 2, 0);
+  const centerOffset = Math.max((containerVisibleWidth - ITEM_STEP) / 2, 0);
 
   const initialTranslate =
-    Math.floor(REPEAT / 2) * items.length * ITEM_WIDTH - centerOffset;
+    Math.floor(REPEAT / 2) * items.length * ITEM_STEP - centerOffset;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <Card title="Case Opener" className="mb-6">
-        <Row gutter={16} className="mb-4">
-          <Col span={24}>
-            <UserSelector
-              users={users}
-              selectedIds={selectedIds}
-              onToggle={toggleSelected}
-              onSelectAll={selectAll}
-              onClear={clearSelected}
-              loading={usersLoading}
-            />
-          </Col>
-        </Row>
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-6 items-start">
+        <div className="w-full">
+          <Card title="Case Opener" className="playful-card w-full">
+            <Row gutter={16} className="mb-4">
+              <Col span={24}>
+                <UserSelector
+                  users={users}
+                  selectedIds={selectedIds}
+                  onToggle={toggleSelected}
+                  onSelectAll={selectAll}
+                  onClear={clearSelected}
+                  loading={usersLoading}
+                />
+              </Col>
+            </Row>
 
-        <Row className="mb-4">
-          <Col span={24}>
-            <CaseStrip
-              repeated={repeated}
-              stripRef={stripRef}
-              itemWidth={ITEM_WIDTH}
-              initialTranslate={initialTranslate}
-              containerWidth={containerVisibleWidth}
-            />
-          </Col>
-        </Row>
+            <Row className="mb-4">
+              <Col span={24} className="flex justify-center">
+                <CaseStrip
+                  repeated={repeated}
+                  stripRef={stripRef}
+                  itemWidth={ITEM_WIDTH}
+                  itemGap={ITEM_GAP}
+                  initialTranslate={initialTranslate}
+                  containerWidth={containerVisibleWidth}
+                />
+              </Col>
+            </Row>
 
-        <Row>
-          <Col span={12}>
-            <Button type="primary" onClick={onOpen} loading={spinning}>
-              Mở hòm
-            </Button>
-          </Col>
-          <Col span={12} className="text-right">
-            <Button
-              onClick={() => {
-                setUsers([]);
-                setResult(null);
-                setHistory([]);
-              }}
-            >
-              Xóa tất cả
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+            <Row>
+              <Col span={12}>
+                <Button
+                  className="playful-btn bg-gradient-to-r from-kid-pink to-kid-orange"
+                  type="primary"
+                  onClick={onOpen}
+                  loading={spinning}
+                >
+                  Mở hòm
+                </Button>
+              </Col>
+              <Col span={12} className="text-right">
+                <Button
+                  className="playful-btn bg-white text-gray-800"
+                  onClick={() => {
+                    setUsers([]);
+                    setResult(null);
+                    setHistory([]);
+                  }}
+                >
+                  Xóa tất cả
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+        </div>
 
-      <Card title="Lịch sử" className="mt-4">
-        <HistoryList history={history} />
-      </Card>
+        <div className="w-full">
+          <Card title="Lịch sử" className="playful-card w-full">
+            <HistoryList history={history} />
+          </Card>
+        </div>
+      </div>
 
       <ResultModal result={result} onClose={() => setResult(null)} />
     </div>

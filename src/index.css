@@ -10,10 +10,49 @@ body,
 }
 
 body {
-  @apply bg-white text-gray-900;
+  /* Playful background for kids: soft gradient */
+  @apply bg-gradient-to-br from-kid-blue via-kid-purple to-kid-pink text-gray-900;
 }
 
 /* Case opener styles */
 .case-strip-item {
   flex: 0 0 auto;
+}
+
+/* Custom playful utility classes */
+@layer components {
+  .playful-btn {
+    @apply px-4 py-2 rounded-full font-semibold text-white shadow-md transition-transform transform;
+  }
+
+  .playful-card {
+    @apply rounded-2xl shadow-xl bg-white/60 backdrop-blur-md;
+  }
+
+  .marker-glow {
+    @apply w-2 h-full rounded bg-gradient-to-b from-transparent via-kid-yellow/80 to-transparent opacity-90;
+  }
+}
+
+@layer utilities {
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+  }
+}
+
+/* Slow spin animation for selected result image */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  /* ensure rotation happens around the element center */
+  transform-origin: center center;
+  -webkit-transform-origin: center center;
+  animation: spin-slow 1s linear infinite;
 }

@@ -42,7 +42,7 @@ export default function HistoryList({ history }: Props) {
         }
 
         return (
-          <List.Item>
+          <List.Item className="mb-3">
             <div className="flex flex-col">
               <div className="text-sm text-gray-600">{formattedTime}</div>
               <div>{messagePart}</div>
