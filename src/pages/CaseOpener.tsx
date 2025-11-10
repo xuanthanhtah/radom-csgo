@@ -235,7 +235,7 @@ export default function CaseOpener(): JSX.Element {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex flex-col gap-6 items-start">
         <div className="w-full">
-          <Card title="Case Opener" className="playful-card w-full">
+          <Card title="Vòng quay may mắn" className="playful-card w-full">
             <Row gutter={16} className="mb-4">
               <Col span={24}>
                 <UserSelector
