@@ -76,6 +76,46 @@ export default function CaseOpener(): JSX.Element {
     };
   }, []);
 
+  // Load history entries from Supabase `Histories` table on mount and
+  // populate the local `history` state so the HistoryList shows persisted
+  // records across page loads.
+  useEffect(() => {
+    let mounted = true;
+    const fetchHistories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("Histories")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(200);
+
+        if (!mounted) return;
+
+        if (error) {
+          console.error("Failed to load histories", error);
+          message.error("Không thể tải lịch sử");
+          return;
+        }
+
+        const entries = (data || []).map((h: any) => {
+          const username = h.username || h.name || "(unknown)";
+          const created = h.created_at || h.createdAt || "";
+          return `${created} | ${username}`;
+        });
+
+        setHistory(entries);
+      } catch (err) {
+        console.error("Unexpected error loading histories", err);
+        if (mounted) message.error("Không thể tải lịch sử");
+      }
+    };
+
+    fetchHistories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const toggleSelected = (id: string) => {
     setSelectedIds((s) =>
       s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
