@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Card, Row, Col, message } from "antd";
 import sample from "lodash/sample";
-import type { Item, User } from "../types";
+import type { Item, User, HistoryEntry } from "../types";
 import CaseStrip from "../components/CaseStrip";
 import HistoryList from "../components/HistoryList";
 import ResultModal from "../components/ResultModal";
@@ -16,7 +16,7 @@ export default function CaseOpener(): JSX.Element {
 
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Item | null>(null);
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
@@ -99,10 +99,14 @@ export default function CaseOpener(): JSX.Element {
           return;
         }
 
-        const entries = (data || []).map((h: any) => {
-          const username = h.username || h.name || "(unknown)";
+        // Map DB rows to structured HistoryEntry objects containing the
+        // created_at timestamp and the stored user id (username column
+        // currently contains the user id in this project).
+        const entries: HistoryEntry[] = (data || []).map((h: any) => {
           const created = h.created_at || h.createdAt || "";
-          return `${created} | ${username}`;
+          // Histories currently stores the user id in `username` column
+          const userId = h.username || h.userId || h.user || "";
+          return { created_at: created, userId };
         });
 
         setHistory(entries);
@@ -172,7 +176,10 @@ export default function CaseOpener(): JSX.Element {
       // (we stored it on the clone) so saved/displayed id is the user's real id.
       const resultId = (winner as any).originalId || winner.id;
       setResult({ id: resultId, name: winner.name, image: winner.image });
-      const entry = `${new Date().toISOString()} | ${winner.name}`;
+      const entry: HistoryEntry = {
+        created_at: new Date().toISOString(),
+        userId: resultId,
+      };
       setHistory((h) => [...h, entry]);
 
       // Save winner to Supabase `Histories` table
@@ -180,9 +187,7 @@ export default function CaseOpener(): JSX.Element {
         try {
           const { data: histData, error: histError } = await supabase
             .from("Histories")
-            .insert([
-              { username: winner.name, created_at: new Date().toString() },
-            ])
+            .insert([{ userId: resultId, created_at: new Date().toString() }])
             .select();
 
           if (histError) {
@@ -286,7 +291,7 @@ export default function CaseOpener(): JSX.Element {
 
         <div className="w-full">
           <Card title="Lịch sử" className="playful-card w-full">
-            <HistoryList history={history} />
+            <HistoryList history={history} users={users} />
           </Card>
         </div>
       </div>

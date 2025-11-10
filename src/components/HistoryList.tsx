@@ -1,30 +1,25 @@
 import React from "react";
-import { List } from "antd";
+import { List, Avatar } from "antd";
+import type { User, HistoryEntry } from "../types";
 
 type Props = {
-  history: string[];
+  history: HistoryEntry[];
+  users: User[];
 };
 
-export default function HistoryList({ history }: Props) {
+export default function HistoryList({ history, users }: Props) {
   return (
     <List
       dataSource={history.slice().reverse()}
-      renderItem={(h) => {
-        // Expect history entries in the shape: "<timestamp> | <message>"
-        const parts = h.split("|").map((p) => p.trim());
-        let timePart = "";
-        let messagePart = h;
+      renderItem={(entry) => {
+        const timePart = entry.created_at || "";
 
-        if (parts.length >= 2) {
-          timePart = parts[0];
-          // join the rest as message in case message contains '|'
-          messagePart = parts.slice(1).join(" | ");
-        } else {
-          // If there is no separator, try to treat whole string as message
-          messagePart = h;
-        }
+        // Find user information from the provided users list
+        const user = users.find((u) => u.id === entry.userId);
+        const displayName = user?.name || "(unknown)";
+        const avatarSrc = (user && (user.img || user.image)) || undefined;
 
-        // Try to parse timePart into a Date and format it for Vietnamese locale.
+        // Format timestamp for Vietnamese locale
         let formattedTime = "";
         if (timePart) {
           const d = new Date(timePart);
@@ -35,7 +30,6 @@ export default function HistoryList({ history }: Props) {
                 timeStyle: "short",
               }).format(d);
             } catch (e) {
-              // fallback to toLocaleString
               formattedTime = d.toLocaleString("vi-VN");
             }
           }
@@ -43,9 +37,12 @@ export default function HistoryList({ history }: Props) {
 
         return (
           <List.Item className="mb-3">
-            <div className="flex flex-col">
-              <div className="text-sm text-gray-600">{formattedTime}</div>
-              <div>{messagePart}</div>
+            <div className="flex items-center gap-3">
+              <Avatar src={avatarSrc} size={40} />
+              <div className="flex flex-col">
+                <div className="text-sm text-gray-600">{formattedTime}</div>
+                <div>{displayName}</div>
+              </div>
             </div>
           </List.Item>
         );
