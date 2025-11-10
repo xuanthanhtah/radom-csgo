@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Card, Row, Col, message } from "antd";
-import sample from "lodash/sample";
+// small weighted picker implemented locally (no extra dependency)
 import type { Item, User, HistoryEntry } from "../types";
 import CaseStrip from "../components/CaseStrip";
 import HistoryList from "../components/HistoryList";
@@ -17,6 +17,8 @@ export default function CaseOpener(): JSX.Element {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Item | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [localUsers, setLocalUsers] = useState<User[]>([]);
+  const [tempName, setTempName] = useState("");
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
@@ -29,9 +31,15 @@ export default function CaseOpener(): JSX.Element {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Combine DB users and local ad-hoc users so both can be selected for a spin
+  const combinedUsers = React.useMemo(
+    () => [...users, ...localUsers],
+    [users, localUsers]
+  );
+
   const items = React.useMemo<Item[]>(
     () =>
-      users
+      combinedUsers
         .filter((u) => selectedIds.includes(u.id))
         // Supabase returns the image url in the `img` field; fall back to `image` if present
         .map((u) => ({
@@ -39,7 +47,7 @@ export default function CaseOpener(): JSX.Element {
           name: u.name,
           image: (u as any).img || u.image || "",
         })),
-    [users, selectedIds]
+    [combinedUsers, selectedIds]
   );
 
   // Choose a smaller repeat count when there are very few items so we don't
@@ -78,16 +86,44 @@ export default function CaseOpener(): JSX.Element {
     };
   }, []);
 
-  // Load history entries from Supabase `Histories` table on mount and
-  // populate the local `history` state so the HistoryList shows persisted
-  // records across page loads.
+  // Helper: compute start (Monday) and end (Friday) of current week for resets
+  const getWeekBounds = () => {
+    const now = new Date();
+    const date = new Date(now);
+    // JS: 0=Sun,1=Mon,... Normalize so Monday is day 0
+    const day = date.getDay();
+    const diffToMon = (day + 6) % 7; // days since Monday
+    const mon = new Date(date);
+    mon.setDate(date.getDate() - diffToMon);
+    mon.setHours(0, 0, 0, 0);
+    const fri = new Date(mon);
+    fri.setDate(mon.getDate() + 4);
+    fri.setHours(23, 59, 59, 999);
+    return { start: mon, end: fri };
+  };
+
+  // Load histories limited to the current week and remove older week data on startup
   useEffect(() => {
     let mounted = true;
     const fetchHistories = async () => {
       try {
+        const { start, end } = getWeekBounds();
+        const startISO = start.toISOString();
+        const endISO = end.toISOString();
+
+        // Remove any old histories (before this week's Monday)
+        try {
+          await supabase.from("Histories").delete().lt("created_at", startISO);
+        } catch (e) {
+          // ignore deletion errors but log
+          console.warn("Failed to delete old histories at startup", e);
+        }
+
         const { data, error } = await supabase
           .from("Histories")
           .select("*")
+          .gte("created_at", startISO)
+          .lte("created_at", endISO)
           .order("created_at", { ascending: false })
           .limit(200);
 
@@ -99,13 +135,9 @@ export default function CaseOpener(): JSX.Element {
           return;
         }
 
-        // Map DB rows to structured HistoryEntry objects containing the
-        // created_at timestamp and the stored user id (username column
-        // currently contains the user id in this project).
         const entries: HistoryEntry[] = (data || []).map((h: any) => {
           const created = h.created_at || h.createdAt || "";
-          // Histories currently stores the user id in `username` column
-          const userId = h.username || h.userId || h.user || "";
+          const userId = h.userId || h.username || h.user || "";
           return { created_at: created, userId };
         });
 
@@ -122,13 +154,15 @@ export default function CaseOpener(): JSX.Element {
     };
   }, []);
 
+  // Note: histories are loaded / trimmed in the startup effect above (filtered to current week)
+
   const toggleSelected = (id: string) => {
     setSelectedIds((s) =>
       s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
     );
   };
 
-  const selectAll = () => setSelectedIds(users.map((u) => u.id));
+  const selectAll = () => setSelectedIds(combinedUsers.map((u) => u.id));
 
   const clearSelected = () => setSelectedIds([]);
 
@@ -140,13 +174,39 @@ export default function CaseOpener(): JSX.Element {
     setSpinning(true);
     setResult(null);
 
-    // Pick a random item from the current `items` list so the result is
-    // random each time. `sample` returns undefined for empty arrays, but we
-    // guard above against empty `items` so this is safe.
-    const chosen = (sample(items) as Item) || items[0];
+    // Build wins count for this week and compute weights per player.
+    const winsCount = history.reduce<Record<string, number>>((m, e) => {
+      m[e.userId] = (m[e.userId] || 0) + 1;
+      return m;
+    }, {});
+
+    const weightMap: Record<string, number> = {};
+    for (const it of items) {
+      const wins = winsCount[it.id] || 0;
+      // Reduce by 80% per win -> multiply weight by 0.2 each time
+      weightMap[it.id] = Math.pow(0.2, wins);
+      // ensure non-zero
+      if (!isFinite(weightMap[it.id]) || weightMap[it.id] <= 0)
+        weightMap[it.id] = 0.000001;
+    }
+
+    // Weighted random pick
+    const pickWeighted = (arr: Item[]) => {
+      const weights = arr.map((a) => weightMap[a.id] ?? 1);
+      const total = weights.reduce((s, v) => s + v, 0);
+      if (total <= 0) return arr[0];
+      let r = Math.random() * total;
+      for (let i = 0; i < arr.length; i++) {
+        if (r < weights[i]) return arr[i];
+        r -= weights[i];
+      }
+      return arr[arr.length - 1];
+    };
+
+    const chosen = pickWeighted(items) || items[0];
 
     // Find the chosen item's index within the unique items array (0..items.length-1)
-    const chosenLocalIndexRaw = items.findIndex((i) => i.name === chosen.name);
+    const chosenLocalIndexRaw = items.findIndex((i) => i.id === chosen.id);
     const chosenLocalIndex = chosenLocalIndexRaw >= 0 ? chosenLocalIndexRaw : 0;
 
     // Compute a base index centered in the repeated strip and add a number of full rotations
@@ -182,12 +242,14 @@ export default function CaseOpener(): JSX.Element {
       };
       setHistory((h) => [...h, entry]);
 
-      // Save winner to Supabase `Histories` table
+      // Save winner to Supabase `Histories` table (use ISO timestamp)
       (async () => {
         try {
           const { data: histData, error: histError } = await supabase
             .from("Histories")
-            .insert([{ userId: resultId, created_at: new Date().toString() }])
+            .insert([
+              { userId: resultId, created_at: new Date().toISOString() },
+            ])
             .select();
 
           if (histError) {
@@ -215,6 +277,57 @@ export default function CaseOpener(): JSX.Element {
     }, 4200);
   };
 
+  // Add a temporary (ad-hoc) player that is NOT saved to DB
+  const addTempPlayer = () => {
+    const name = tempName?.trim();
+    if (!name) {
+      message.warning("Nhập tên người chơi tạm thời");
+      return;
+    }
+    const id = `temp-${Date.now()}`;
+    const u: User = { id, name, image: "" };
+    setLocalUsers((s) => [...s, u]);
+    setSelectedIds((s) => [...s, id]);
+    setTempName("");
+  };
+
+  // Delete a single history entry (by exact created_at + userId match)
+  const onDeleteEntry = async (entry: HistoryEntry) => {
+    try {
+      await supabase
+        .from("Histories")
+        .delete()
+        .match({ userId: entry.userId, created_at: entry.created_at });
+      setHistory((h) =>
+        h.filter(
+          (x) =>
+            !(x.userId === entry.userId && x.created_at === entry.created_at)
+        )
+      );
+      message.success("Đã xóa bản ghi");
+    } catch (e) {
+      console.error("Failed to delete history entry", e);
+      message.error("Không thể xóa bản ghi");
+    }
+  };
+
+  // Delete all histories for current week
+  const onDeleteAll = async () => {
+    try {
+      const { start, end } = getWeekBounds();
+      await supabase
+        .from("Histories")
+        .delete()
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString());
+      setHistory([]);
+      message.success("Đã xóa lịch sử tuần");
+    } catch (e) {
+      console.error("Failed to delete all histories", e);
+      message.error("Không thể xóa lịch sử");
+    }
+  };
+
   // Limit the visible container width so selecting many items doesn't expand
   // the container off-screen. Keep at least one item width, but cap to 900px
   // (adjustable) for large selections.
@@ -239,13 +352,29 @@ export default function CaseOpener(): JSX.Element {
             <Row gutter={16} className="mb-4">
               <Col span={24}>
                 <UserSelector
-                  users={users}
+                  users={combinedUsers}
                   selectedIds={selectedIds}
                   onToggle={toggleSelected}
-                  onSelectAll={selectAll}
+                  onSelectAll={() =>
+                    setSelectedIds(combinedUsers.map((u) => u.id))
+                  }
                   onClear={clearSelected}
                   loading={usersLoading}
                 />
+              </Col>
+              <Col span={24} className="mt-2 flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) =>
+                    setTempName((e.target as HTMLInputElement).value)
+                  }
+                  placeholder="Thêm tên tạm thời..."
+                  className="border rounded p-2 flex-1"
+                />
+                <Button onClick={addTempPlayer} type="default">
+                  Thêm tạm
+                </Button>
               </Col>
             </Row>
 
@@ -291,7 +420,12 @@ export default function CaseOpener(): JSX.Element {
 
         <div className="w-full">
           <Card title="Lịch sử" className="playful-card w-full">
-            <HistoryList history={history} users={users} />
+            <HistoryList
+              history={history}
+              users={combinedUsers}
+              onDeleteEntry={onDeleteEntry}
+              onDeleteAll={onDeleteAll}
+            />
           </Card>
         </div>
       </div>
