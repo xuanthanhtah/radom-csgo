@@ -1,4 +1,4 @@
-import React from "react";
+import { useRef, useEffect } from "react";
 import { Modal } from "antd";
 import type { Item } from "../types";
 
@@ -8,6 +8,43 @@ type Props = {
 };
 
 export default function ResultModal({ result, onClose }: Props) {
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (!result) return;
+
+    const img = imgRef.current;
+    if (!img) return;
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReduced) return;
+
+    const comp = window.getComputedStyle(img);
+    const animName =
+      comp.animationName || comp.getPropertyValue("animation-name");
+
+    let rafId: number | null = null;
+    let angle = 0;
+
+    // fallback nếu KHÔNG có animation từ CSS
+    if (!animName || animName === "none") {
+      const step = () => {
+        angle = (angle + 4) % 360;
+        img.style.transform = `rotate(${angle}deg)`;
+        rafId = requestAnimationFrame(step);
+      };
+      rafId = requestAnimationFrame(step);
+    }
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (img) img.style.transform = "";
+    };
+  }, [result]);
+
   return (
     <Modal
       open={!!result}
@@ -19,9 +56,10 @@ export default function ResultModal({ result, onClose }: Props) {
         <div className="flex flex-col items-center gap-4">
           {result.image ? (
             <img
+              ref={imgRef}
               src={result.image}
               alt={result.name}
-              className="w-64 h-64 object-cover rounded shadow-2xl transform origin-center animate-spin-slow"
+              className="w-64 h-64 object-cover rounded shadow-2xl animate-spin-slow"
               style={{
                 animation: "spin-slow 1s linear infinite",
                 transformOrigin: "center",
