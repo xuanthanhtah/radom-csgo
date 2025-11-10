@@ -285,7 +285,12 @@ export default function CaseOpener(): JSX.Element {
       return;
     }
     const id = `temp-${Date.now()}`;
-    const u: User = { id, name, image: "" };
+    const u: User = {
+      id,
+      name,
+      image:
+        "https://res.cloudinary.com/lxthanh269/image/upload/v1762755701/dua_zit/meme-meo-cuoi-5_ggceyd.jpg",
+    };
     setLocalUsers((s) => [...s, u]);
     setSelectedIds((s) => [...s, id]);
     setTempName("");
