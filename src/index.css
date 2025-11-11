@@ -55,5 +55,5 @@ body {
   transform-origin: center center;
   -webkit-transform-origin: center center;
   /* run exactly once and keep the final rotated state */
-  animation: spin-slow 3s linear 1 forwards;
+  animation: spin-slow 1s linear 1 forwards;
 }

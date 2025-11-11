@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Modal } from "antd";
 import type { Item } from "../types";
 
@@ -9,6 +9,11 @@ type Props = {
 
 export default function ResultModal({ result, onClose }: Props) {
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const fireworksTimeoutRef = useRef<number | null>(null);
+
+  const FIREWORKS_URL =
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExYjVnbHk1N20yOWtkZmVvbDAyMXcwZm81ZmV1cm84eWRjb3dja2Z6OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/S3bp48refqWzwxx70g/giphy.gif";
 
   useEffect(() => {
     if (!result) return;
@@ -54,6 +59,34 @@ export default function ResultModal({ result, onClose }: Props) {
     };
   }, [result]);
 
+  // show fireworks GIF briefly when a new result appears
+  useEffect(() => {
+    // clear any previous timeout
+    if (fireworksTimeoutRef.current !== null) {
+      window.clearTimeout(fireworksTimeoutRef.current);
+      fireworksTimeoutRef.current = null;
+    }
+
+    if (!result) {
+      setShowFireworks(false);
+      return;
+    }
+
+    setShowFireworks(true);
+    // auto-hide after 3s (typical short fireworks burst)
+    fireworksTimeoutRef.current = window.setTimeout(() => {
+      setShowFireworks(false);
+      fireworksTimeoutRef.current = null;
+    }, 3000);
+
+    return () => {
+      if (fireworksTimeoutRef.current !== null) {
+        window.clearTimeout(fireworksTimeoutRef.current);
+        fireworksTimeoutRef.current = null;
+      }
+    };
+  }, [result]);
+
   return (
     <Modal
       open={!!result}
@@ -62,7 +95,16 @@ export default function ResultModal({ result, onClose }: Props) {
       title={result?.name || ""}
     >
       {result && (
-        <div className="flex flex-col items-center gap-4">
+        <div className="relative flex flex-col items-center gap-4">
+          {showFireworks && (
+            <img
+              src={FIREWORKS_URL}
+              alt="fireworks"
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 z-50"
+            />
+          )}
+
           {result.image ? (
             <img
               ref={imgRef}
