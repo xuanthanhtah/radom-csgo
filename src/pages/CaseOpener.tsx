@@ -111,17 +111,24 @@ export default function CaseOpener(): JSX.Element {
         const startISO = start.toISOString();
         const endISO = end.toISOString();
 
-        // Remove any old histories (before this week's Monday)
+        // Mark any old histories (before this week's Monday) as inactive=false
+        // (soft-delete) so we keep rows but hide them from the UI. Also update
+        // modify_date so we record when they were hidden.
         try {
-          await supabase.from("Histories").delete().lt("created_at", startISO);
+          await supabase
+            .from("Histories")
+            .update({ inactive: false, modify_date: new Date().toISOString() })
+            .lt("created_at", startISO);
         } catch (e) {
-          // ignore deletion errors but log
-          console.warn("Failed to delete old histories at startup", e);
+          // ignore update errors but log
+          console.warn("Failed to mark old histories inactive at startup", e);
         }
 
+        // Only select histories that are active in the UI (inactive = true).
         const { data, error } = await supabase
           .from("Histories")
           .select("*")
+          .eq("inactive", true)
           .gte("created_at", startISO)
           .lte("created_at", endISO)
           .order("created_at", { ascending: false })
@@ -138,7 +145,9 @@ export default function CaseOpener(): JSX.Element {
         const entries: HistoryEntry[] = (data || []).map((h: any) => {
           const created = h.created_at || h.createdAt || "";
           const userId = h.userId || h.username || h.user || "";
-          return { created_at: created, userId };
+          const modify = h.modify_date || h.modifyDate || "";
+          const inactive = typeof h.inactive === "boolean" ? h.inactive : true;
+          return { created_at: created, userId, modify_date: modify, inactive };
         });
 
         setHistory(entries);
@@ -175,7 +184,9 @@ export default function CaseOpener(): JSX.Element {
     setResult(null);
 
     // Build wins count for this week and compute weights per player.
+    // Only count active history rows (inactive === true)
     const winsCount = history.reduce<Record<string, number>>((m, e) => {
+      if (e.inactive !== true) return m;
       m[e.userId] = (m[e.userId] || 0) + 1;
       return m;
     }, {});
@@ -236,9 +247,11 @@ export default function CaseOpener(): JSX.Element {
       // (we stored it on the clone) so saved/displayed id is the user's real id.
       const resultId = (winner as any).originalId || winner.id;
       setResult({ id: resultId, name: winner.name, image: winner.image });
+      const nowIso = new Date().toISOString();
       const entry: HistoryEntry = {
-        created_at: new Date().toISOString(),
+        created_at: nowIso,
         userId: resultId,
+        modify_date: nowIso,
       };
       setHistory((h) => [...h, entry]);
 
@@ -248,7 +261,13 @@ export default function CaseOpener(): JSX.Element {
           const { data: histData, error: histError } = await supabase
             .from("Histories")
             .insert([
-              { userId: resultId, created_at: new Date().toISOString() },
+              {
+                userId: resultId,
+                created_at: nowIso,
+                // Mark as visible in the UI
+                inactive: true,
+                modify_date: nowIso,
+              },
             ])
             .select();
 
@@ -299,9 +318,11 @@ export default function CaseOpener(): JSX.Element {
   // Delete a single history entry (by exact created_at + userId match)
   const onDeleteEntry = async (entry: HistoryEntry) => {
     try {
+      // Soft-delete: set inactive to false instead of removing the row and
+      // update modify_date so we know when it was hidden.
       await supabase
         .from("Histories")
-        .delete()
+        .update({ inactive: false, modify_date: new Date().toISOString() })
         .match({ userId: entry.userId, created_at: entry.created_at });
       setHistory((h) =>
         h.filter(
@@ -311,7 +332,7 @@ export default function CaseOpener(): JSX.Element {
       );
       message.success("Đã xóa bản ghi");
     } catch (e) {
-      console.error("Failed to delete history entry", e);
+      console.error("Failed to mark history entry inactive", e);
       message.error("Không thể xóa bản ghi");
     }
   };
@@ -320,15 +341,17 @@ export default function CaseOpener(): JSX.Element {
   const onDeleteAll = async () => {
     try {
       const { start, end } = getWeekBounds();
+      // Soft-delete all: mark inactive=false and update modify_date so they
+      // won't show in the UI and we record when this happened.
       await supabase
         .from("Histories")
-        .delete()
+        .update({ inactive: false, modify_date: new Date().toISOString() })
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString());
       setHistory([]);
       message.success("Đã xóa lịch sử tuần");
     } catch (e) {
-      console.error("Failed to delete all histories", e);
+      console.error("Failed to mark all histories inactive", e);
       message.error("Không thể xóa lịch sử");
     }
   };

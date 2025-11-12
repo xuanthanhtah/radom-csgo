@@ -17,4 +17,8 @@ export type HistoryEntry = {
   created_at: string;
   // stored as the user's id in the Histories table
   userId: string;
+  // whether this row is visible/active in the UI
+  inactive?: boolean;
+  // ISO timestamp string of last modification (optional)
+  modify_date?: string;
 };
