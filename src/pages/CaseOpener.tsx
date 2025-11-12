@@ -333,13 +333,28 @@ export default function CaseOpener(): JSX.Element {
     }
   };
 
-  // Limit the visible container width so selecting many items doesn't expand
-  // the container off-screen. Keep at least one item width, but cap to 900px
-  // (adjustable) for large selections.
-  const containerVisibleWidth = Math.max(
-    Math.min(items.length * ITEM_STEP, 900),
-    ITEM_STEP
-  );
+  // Use a fixed, responsive visible container width so the selection box
+  // does NOT stretch/shrink as the number of items changes. We compute a
+  // reasonable max (900px) but adapt to window width on small screens.
+  const FIXED_MAX_VISIBLE = 900;
+  const [containerVisibleWidth, setContainerVisibleWidth] =
+    React.useState<number>(
+      // safe initial: at least one item width
+      Math.max(ITEM_STEP, Math.min(FIXED_MAX_VISIBLE, 720))
+    );
+
+  React.useEffect(() => {
+    const update = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+      // subtract approximate page paddings/margins so the strip fits nicely
+      const available = Math.max(ITEM_STEP, vw - 160);
+      const chosen = Math.min(FIXED_MAX_VISIBLE, available);
+      setContainerVisibleWidth(Math.max(ITEM_STEP, chosen));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [ITEM_STEP]);
 
   // Offset to center an item under the fixed marker in the middle of the
   // container. We subtract this from translate values so the chosen item's
@@ -350,41 +365,41 @@ export default function CaseOpener(): JSX.Element {
     Math.floor(REPEAT / 2) * items.length * ITEM_STEP - centerOffset;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex flex-col gap-6 items-start">
-        <div className="w-full">
-          <Card title="Vòng quay may mắn" className="playful-card w-full">
-            <Row gutter={16} className="mb-4">
-              <Col span={24}>
-                <UserSelector
-                  users={combinedUsers}
-                  selectedIds={selectedIds}
-                  onToggle={toggleSelected}
-                  onSelectAll={() =>
-                    setSelectedIds(combinedUsers.map((u) => u.id))
-                  }
-                  onClear={clearSelected}
-                  loading={usersLoading}
-                />
-              </Col>
-              <Col span={24} className="mt-2 flex gap-2 items-center">
-                <input
-                  type="text"
-                  value={tempName}
-                  onChange={(e) =>
-                    setTempName((e.target as HTMLInputElement).value)
-                  }
-                  placeholder="Thêm tên tạm thời..."
-                  className="border rounded p-2 flex-1"
-                />
-                <Button onClick={addTempPlayer} type="default">
-                  Thêm tạm
-                </Button>
-              </Col>
-            </Row>
+    <div className="p-6 min-w-[640px] mx-auto">
+      {/* Single-page two-column layout: left = main interaction, right = history */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="basis-[70%]">
+          <Card title="Vòng quay may mắn" className="soft-card w-full">
+            <div className="mb-4">
+              <UserSelector
+                users={combinedUsers}
+                selectedIds={selectedIds}
+                onToggle={toggleSelected}
+                onSelectAll={() =>
+                  setSelectedIds(combinedUsers.map((u) => u.id))
+                }
+                onClear={clearSelected}
+                loading={usersLoading}
+              />
+            </div>
 
-            <Row className="mb-4">
-              <Col span={24} className="flex justify-center">
+            <div className="mb-3 flex gap-2 items-center">
+              <input
+                type="text"
+                value={tempName}
+                onChange={(e) =>
+                  setTempName((e.target as HTMLInputElement).value)
+                }
+                placeholder="Thêm tên tạm thời..."
+                className="border rounded p-2 flex-1"
+              />
+              <Button onClick={addTempPlayer} type="default">
+                Thêm tạm
+              </Button>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex justify-center">
                 <CaseStrip
                   repeated={repeated}
                   stripRef={stripRef}
@@ -393,23 +408,23 @@ export default function CaseOpener(): JSX.Element {
                   initialTranslate={initialTranslate}
                   containerWidth={containerVisibleWidth}
                 />
-              </Col>
-            </Row>
+              </div>
+            </div>
 
-            <Row>
-              <Col span={12}>
+            <div className="flex gap-3 items-center">
+              <div className="flex-1">
                 <Button
-                  className="playful-btn bg-gradient-to-r from-kid-pink to-kid-orange"
+                  className="playful-btn bg-gradient-to-r from-kid-pink to-kid-orange w-full"
                   type="primary"
                   onClick={onOpen}
                   loading={spinning}
                 >
                   Mở hòm
                 </Button>
-              </Col>
-              <Col span={12} className="text-right">
+              </div>
+              <div className="w-40">
                 <Button
-                  className="playful-btn bg-white text-gray-800"
+                  className="playful-btn bg-white text-gray-800 w-full"
                   onClick={() => {
                     setUsers([]);
                     setResult(null);
@@ -418,19 +433,21 @@ export default function CaseOpener(): JSX.Element {
                 >
                   Xóa tất cả
                 </Button>
-              </Col>
-            </Row>
+              </div>
+            </div>
           </Card>
         </div>
 
-        <div className="w-full">
-          <Card title="Lịch sử" className="playful-card w-full">
-            <HistoryList
-              history={history}
-              users={combinedUsers}
-              onDeleteEntry={onDeleteEntry}
-              onDeleteAll={onDeleteAll}
-            />
+        <div className="basis-[30%]">
+          <Card title="Lịch sử" className="soft-card w-full">
+            <div className="history-panel -mx-4 px-4">
+              <HistoryList
+                history={history}
+                users={combinedUsers}
+                onDeleteEntry={onDeleteEntry}
+                onDeleteAll={onDeleteAll}
+              />
+            </div>
           </Card>
         </div>
       </div>

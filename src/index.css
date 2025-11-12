@@ -10,8 +10,8 @@ body,
 }
 
 body {
-  /* Playful background for kids: soft gradient */
-  @apply bg-gradient-to-br from-kid-blue via-kid-purple to-kid-pink text-gray-900;
+  /* Playful background for kids: soft, harmonious gradient */
+  @apply bg-gradient-to-br from-kid-blue/70 via-kid-purple/60 to-kid-pink/60 text-gray-900;
 }
 
 /* Case opener styles */
@@ -26,11 +26,26 @@ body {
   }
 
   .playful-card {
-    @apply rounded-2xl shadow-xl bg-white/60 backdrop-blur-md;
+    @apply rounded-2xl shadow-xl bg-white/70 backdrop-blur-sm;
   }
 
   .marker-glow {
     @apply w-2 h-full rounded bg-gradient-to-b from-transparent via-kid-yellow/80 to-transparent opacity-90;
+  }
+}
+
+/* Layout utilities for single-page interaction */
+@layer components {
+  .history-panel {
+    /* Keep history visible without forcing the whole page to scroll */
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-right: 0.5rem; /* space for scrollbar */
+  }
+
+  /* Gentle card used for the strip and side panels to keep colors lively but not harsh */
+  .soft-card {
+    @apply rounded-2xl shadow-lg bg-white/60;
   }
 }
 

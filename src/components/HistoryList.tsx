@@ -19,7 +19,7 @@ export default function HistoryList({
     <div>
       <div className="flex justify-end mb-2">
         <button
-          className="text-sm text-red-600 underline"
+          className="text-xs text-red-600 underline"
           onClick={() => {
             if (onDeleteAll) onDeleteAll();
           }}
@@ -29,6 +29,7 @@ export default function HistoryList({
         </button>
       </div>
       <List
+        size="small"
         dataSource={history.slice().reverse()}
         renderItem={(entry) => {
           const timePart = entry.created_at || "";
@@ -55,13 +56,13 @@ export default function HistoryList({
           }
 
           return (
-            <List.Item className="mb-3">
+            <List.Item className="py-2">
               <div className="flex items-center gap-3 w-full justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar src={avatarSrc} size={40} />
+                  <Avatar src={avatarSrc} size={36} />
                   <div className="flex flex-col">
-                    <div className="text-sm text-gray-600">{formattedTime}</div>
-                    <div>{displayName}</div>
+                    <div className="text-xs text-gray-600">{formattedTime}</div>
+                    <div className="text-sm">{displayName}</div>
                   </div>
                 </div>
                 <div className="flex gap-2">
