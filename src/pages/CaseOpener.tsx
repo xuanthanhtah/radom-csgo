@@ -69,7 +69,10 @@ export default function CaseOpener(): JSX.Element {
     let mounted = true;
     const fetchUsers = async () => {
       setUsersLoading(true);
-      const { data, error } = await supabase.from("User").select("*");
+      const { data, error } = await supabase
+        .from("User")
+        .select("*")
+        .eq("inActive", true);
       if (!mounted) return;
       if (error) {
         console.error("Failed to load users", error);
@@ -297,22 +300,66 @@ export default function CaseOpener(): JSX.Element {
   };
 
   // Add a temporary (ad-hoc) player that is NOT saved to DB
-  const addTempPlayer = () => {
+  const addTempPlayer = async () => {
     const name = tempName?.trim();
     if (!name) {
       message.warning("Nhập tên người chơi tạm thời");
       return;
     }
-    const id = `temp-${Date.now()}`;
-    const u: User = {
-      id,
-      name,
-      image:
-        "https://res.cloudinary.com/lxthanh269/image/upload/v1762755701/dua_zit/meme-meo-cuoi-5_ggceyd.jpg",
-    };
-    setLocalUsers((s) => [...s, u]);
-    setSelectedIds((s) => [...s, id]);
-    setTempName("");
+
+    // Default image provided by the user request
+    const defaultImage =
+      "https://res.cloudinary.com/lxthanh269/image/upload/v1762502123/dua_zit/images_pygfgg.jpg";
+
+    try {
+      // Insert the new user into the `User` table and return the inserted row
+      const { data: userData, error: userError } = await supabase
+        .from("User")
+        .insert([
+          {
+            name,
+            img: defaultImage,
+            inActive: true,
+          },
+        ])
+        .select();
+
+      if (
+        userError ||
+        !userData ||
+        (Array.isArray(userData) && userData.length === 0)
+      ) {
+        throw userError || new Error("No user returned from insert");
+      }
+
+      // Supabase returns an array of inserted rows; take the first
+      const newUser = (
+        Array.isArray(userData) ? userData[0] : userData
+      ) as User;
+
+      // Add to local users state so it appears in the selector
+      setUsers((s) => [...s, newUser]);
+      // Select the newly created user
+      setSelectedIds((s) => [...s, newUser.id]);
+      setTempName("");
+
+      message.success("Đã thêm người chơi");
+    } catch (err) {
+      console.error("Failed to insert user into DB", err);
+      message.error("Không thể thêm người chơi, dùng tạm thời");
+
+      // Fallback: add a temporary local user (keeps previous behaviour)
+      const id = `temp-${Date.now()}`;
+      const u: User = {
+        id,
+        name,
+        image:
+          "https://res.cloudinary.com/lxthanh269/image/upload/v1762755701/dua_zit/meme-meo-cuoi-5_ggceyd.jpg",
+      };
+      setLocalUsers((s) => [...s, u]);
+      setSelectedIds((s) => [...s, id]);
+      setTempName("");
+    }
   };
 
   // Delete a single history entry (by exact created_at + userId match)
