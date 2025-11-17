@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Card, Row, Col, message } from "antd";
+import LoadingPage from "../components/LoadingPage";
 // small weighted picker implemented locally (no extra dependency)
 import type { Item, User, HistoryEntry } from "../types";
 import CaseStrip from "../components/CaseStrip";
@@ -12,6 +13,7 @@ import supabase from "../lib/supabase";
 
 export default function CaseOpener(): JSX.Element {
   const [users, setUsers] = useState<User[]>([]);
+  // Show a full-page loader on first visit while users are fetched
   const [usersLoading, setUsersLoading] = useState(false);
 
   const [spinning, setSpinning] = useState(false);
@@ -81,7 +83,9 @@ export default function CaseOpener(): JSX.Element {
       } else {
         setUsers((data as User[]) || []);
       }
-      setUsersLoading(false);
+      setTimeout(() => {
+        setUsersLoading(false);
+      }, 2500);
     };
     fetchUsers();
     return () => {
@@ -433,6 +437,11 @@ export default function CaseOpener(): JSX.Element {
 
   const initialTranslate =
     Math.floor(REPEAT / 2) * items.length * ITEM_STEP - centerOffset;
+  // If users are loading on first visit and there are no users yet,
+  // show a dedicated full-page loading component for a cleaner UX.
+  if (usersLoading) {
+    return <LoadingPage message={"Đang tải người dùng..."} />;
+  }
 
   return (
     <div className="p-6 min-w-[640px] mx-auto">
