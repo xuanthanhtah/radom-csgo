@@ -85,7 +85,7 @@ export default function CaseOpener(): JSX.Element {
       }
       setTimeout(() => {
         setUsersLoading(false);
-      }, 2500);
+      }, 1500);
     };
     fetchUsers();
     return () => {
@@ -109,65 +109,59 @@ export default function CaseOpener(): JSX.Element {
     return { start: mon, end: fri };
   };
 
+  const fetchHistories = async () => {
+    try {
+      const { start, end } = getWeekBounds();
+      const startISO = start.toISOString();
+      const endISO = end.toISOString();
+
+      // Mark any old histories (before this week's Monday) as inactive=false
+      // (soft-delete) so we keep rows but hide them from the UI. Also update
+      // modify_date so we record when they were hidden.
+      try {
+        await supabase
+          .from("Histories")
+          .update({ inactive: false, modify_date: new Date().toISOString() })
+          .lt("created_at", startISO);
+      } catch (e) {
+        // ignore update errors but log
+        console.warn("Failed to mark old histories inactive at startup", e);
+      }
+
+      // Only select histories that are active in the UI (inactive = true).
+      const { data, error } = await supabase
+        .from("Histories")
+        .select("*")
+        .eq("inactive", true)
+        .gte("created_at", startISO)
+        .lte("created_at", endISO)
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (error) {
+        console.error("Failed to load histories", error);
+        message.error("Không thể tải lịch sử");
+        return;
+      }
+
+      const entries: HistoryEntry[] = (data || []).map((h: any) => {
+        const created = h.created_at || h.createdAt || "";
+        const userId = h.userId || h.username || h.user || "";
+        const modify = h.modify_date || h.modifyDate || "";
+        const inactive = typeof h.inactive === "boolean" ? h.inactive : true;
+        return { created_at: created, userId, modify_date: modify, inactive };
+      });
+
+      setHistory(entries);
+    } catch (err) {
+      console.error("Unexpected error loading histories", err);
+      message.error("Không thể tải lịch sử");
+    }
+  };
+
   // Load histories limited to the current week and remove older week data on startup
   useEffect(() => {
-    let mounted = true;
-    const fetchHistories = async () => {
-      try {
-        const { start, end } = getWeekBounds();
-        const startISO = start.toISOString();
-        const endISO = end.toISOString();
-
-        // Mark any old histories (before this week's Monday) as inactive=false
-        // (soft-delete) so we keep rows but hide them from the UI. Also update
-        // modify_date so we record when they were hidden.
-        try {
-          await supabase
-            .from("Histories")
-            .update({ inactive: false, modify_date: new Date().toISOString() })
-            .lt("created_at", startISO);
-        } catch (e) {
-          // ignore update errors but log
-          console.warn("Failed to mark old histories inactive at startup", e);
-        }
-
-        // Only select histories that are active in the UI (inactive = true).
-        const { data, error } = await supabase
-          .from("Histories")
-          .select("*")
-          .eq("inactive", true)
-          .gte("created_at", startISO)
-          .lte("created_at", endISO)
-          .order("created_at", { ascending: false })
-          .limit(200);
-
-        if (!mounted) return;
-
-        if (error) {
-          console.error("Failed to load histories", error);
-          message.error("Không thể tải lịch sử");
-          return;
-        }
-
-        const entries: HistoryEntry[] = (data || []).map((h: any) => {
-          const created = h.created_at || h.createdAt || "";
-          const userId = h.userId || h.username || h.user || "";
-          const modify = h.modify_date || h.modifyDate || "";
-          const inactive = typeof h.inactive === "boolean" ? h.inactive : true;
-          return { created_at: created, userId, modify_date: modify, inactive };
-        });
-
-        setHistory(entries);
-      } catch (err) {
-        console.error("Unexpected error loading histories", err);
-        if (mounted) message.error("Không thể tải lịch sử");
-      }
-    };
-
     fetchHistories();
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   // Note: histories are loaded / trimmed in the startup effect above (filtered to current week)
@@ -260,7 +254,7 @@ export default function CaseOpener(): JSX.Element {
         userId: resultId,
         modify_date: nowIso,
       };
-      setHistory((h) => [...h, entry]);
+      // setHistory((h) => [...h, entry]);
 
       // Save winner to Supabase `Histories` table (use ISO timestamp)
       (async () => {
@@ -284,6 +278,7 @@ export default function CaseOpener(): JSX.Element {
           } else {
             // Optionally do something with histData, e.g., console.log or update UI
             // console.log('History saved', histData);
+            await fetchHistories();
           }
         } catch (err) {
           console.error("Unexpected error saving history", err);
