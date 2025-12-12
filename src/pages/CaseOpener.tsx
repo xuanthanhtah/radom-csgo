@@ -195,8 +195,8 @@ export default function CaseOpener(): JSX.Element {
     const weightMap: Record<string, number> = {};
     for (const it of items) {
       const wins = winsCount[it.id] || 0;
-      // Reduce by 80% per win -> multiply weight by 0.2 each time
-      weightMap[it.id] = Math.pow(0.2, wins);
+      // Reduce by 90% per win -> multiply weight by 0.1 each time
+      weightMap[it.id] = Math.pow(0.1, wins);
       // ensure non-zero
       if (!isFinite(weightMap[it.id]) || weightMap[it.id] <= 0)
         weightMap[it.id] = 0.000001;
