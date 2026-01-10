@@ -26,7 +26,7 @@
 ### 3.3. Quy tắc chọn người chiến thắng
 
 - Random từ danh sách người chơi.
-- **Luật giảm tỉ lệ trong tuần (Thứ 2 → Thứ 6):**
+- **Luật giảm tỉ lệ trong tuần (Thứ 2 → CN):**
 
   - Ban đầu tỷ lệ trúng của các người chơi là như nhau.
   - Nếu người chơi đã trúng **1 lần trong tuần** → tỉ lệ trúng các lần tiếp theo **giảm 80%**.
@@ -35,7 +35,7 @@
     - ví dụ: giảm 80%/100% > giảm 80%/20% > tiếp tục....
 
   - Giảm tỉ lệ áp dụng cho **toàn bộ lượt quay còn lại trong tuần đó**.
-  - Mỗi tuần bắt đầu từ **Thứ 2 đến Thứ 6**.
+  - Mỗi tuần bắt đầu từ **Thứ 2 đến CN** (Chủ Nhật).
 
 ### 3.4. Lịch sử quay
 

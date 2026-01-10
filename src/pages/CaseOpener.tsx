@@ -93,7 +93,7 @@ export default function CaseOpener(): JSX.Element {
     };
   }, []);
 
-  // Helper: compute start (Monday) and end (Friday) of current week for resets
+  // Helper: compute start (Monday) and end (Sunday) of current week for resets
   const getWeekBounds = () => {
     const now = new Date();
     const date = new Date(now);
@@ -103,10 +103,10 @@ export default function CaseOpener(): JSX.Element {
     const mon = new Date(date);
     mon.setDate(date.getDate() - diffToMon);
     mon.setHours(0, 0, 0, 0);
-    const fri = new Date(mon);
-    fri.setDate(mon.getDate() + 4);
-    fri.setHours(23, 59, 59, 999);
-    return { start: mon, end: fri };
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    sun.setHours(23, 59, 59, 999);
+    return { start: mon, end: sun };
   };
 
   const fetchHistories = async () => {
