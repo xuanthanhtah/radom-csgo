@@ -1,5 +1,5 @@
 import React from "react";
-import { List, Avatar } from "antd";
+import { Avatar } from "antd";
 import type { User, HistoryEntry } from "../types";
 
 type Props = {
@@ -15,70 +15,115 @@ export default function HistoryList({
   onDeleteEntry,
   onDeleteAll,
 }: Props) {
+  // Define gradient colors for history items
+  const gradients = [
+    "from-cyan-400 via-cyan-500 to-cyan-600",
+    "from-sky-400 via-sky-500 to-sky-600",
+    "from-blue-400 via-blue-500 to-blue-600",
+    "from-indigo-400 via-indigo-500 to-indigo-600",
+    "from-violet-400 via-violet-500 to-violet-600",
+    "from-purple-400 via-purple-500 to-purple-600",
+    "from-fuchsia-400 via-fuchsia-500 to-fuchsia-600",
+    "from-pink-400 via-pink-500 to-pink-600",
+    "from-rose-400 via-rose-500 to-rose-600",
+    "from-red-400 via-red-500 to-red-600",
+  ];
+
   return (
     <div>
-      <div className="flex justify-end mb-2">
+      {/* Header with delete all button */}
+      <div className="flex justify-end mb-3">
         <button
-          className="text-xs text-red-600 underline"
+          className="px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg"
           onClick={() => {
             if (onDeleteAll) onDeleteAll();
           }}
           disabled={!onDeleteAll || history.length === 0}
         >
-          Xóa lịch sử tuần
+          🗑️ Xóa lịch sử tuần
         </button>
       </div>
-      <List
-        size="small"
-        dataSource={history.slice().reverse()}
-        renderItem={(entry) => {
-          const timePart = entry.created_at || "";
 
-          // Find user information from the provided users list
-          const user = users.find((u) => u.id === entry.userId);
-          const displayName = user?.name || "(unknown)";
-          const avatarSrc = (user && (user.img || user.image)) || undefined;
+      {/* History list */}
+      {history.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">Chưa có lịch sử</div>
+      ) : (
+        <div className="space-y-2">
+          {history
+            .slice()
+            .reverse()
+            .map((entry, index) => {
+              const timePart = entry.created_at || "";
 
-          // Format timestamp for Vietnamese locale
-          let formattedTime = "";
-          if (timePart) {
-            const d = new Date(timePart);
-            if (!isNaN(d.getTime())) {
-              try {
-                formattedTime = new Intl.DateTimeFormat("vi-VN", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                }).format(d);
-              } catch (e) {
-                formattedTime = d.toLocaleString("vi-VN");
+              // Find user information from the provided users list
+              const user = users.find(
+                (u) => String(u.id) === String(entry.userId)
+              );
+              const displayName = user?.name || "(unknown)";
+              const avatarSrc = (user && (user.img || user.image)) || undefined;
+
+              // Format timestamp for Vietnamese locale
+              let formattedTime = "";
+              if (timePart) {
+                const d = new Date(timePart);
+                if (!isNaN(d.getTime())) {
+                  try {
+                    formattedTime = new Intl.DateTimeFormat("vi-VN", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(d);
+                  } catch (e) {
+                    formattedTime = d.toLocaleString("vi-VN");
+                  }
+                }
               }
-            }
-          }
 
-          return (
-            <List.Item className="py-2">
-              <div className="flex items-center gap-3 w-full justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar src={avatarSrc} size={36} />
-                  <div className="flex flex-col">
-                    <div className="text-xs text-gray-600">{formattedTime}</div>
-                    <div className="text-sm">{displayName}</div>
+              const gradient = gradients[index % gradients.length];
+
+              return (
+                <div
+                  key={`${entry.userId}-${entry.created_at}`}
+                  className={`relative overflow-hidden rounded-lg bg-gradient-to-r ${gradient} p-[2px] transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+                >
+                  <div className="bg-white rounded-lg p-2.5 flex items-center gap-3">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      <Avatar
+                        src={avatarSrc}
+                        size={44}
+                        className="border-2 border-white shadow-md"
+                      />
+                    </div>
+
+                    {/* Name and Time */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 truncate text-sm">
+                        {displayName}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs text-gray-500">🕐</span>
+                        <span className="text-xs text-gray-600">
+                          {formattedTime}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    <div className="flex-shrink-0">
+                      <button
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full bg-gradient-to-r ${gradient} text-white hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
+                        onClick={() => onDeleteEntry && onDeleteEntry(entry)}
+                        disabled={!onDeleteEntry}
+                      >
+                        ✕ Xóa
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    className="text-xs text-red-600"
-                    onClick={() => onDeleteEntry && onDeleteEntry(entry)}
-                    disabled={!onDeleteEntry}
-                  >
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            </List.Item>
-          );
-        }}
-      />
+              );
+            })}
+        </div>
+      )}
     </div>
   );
 }

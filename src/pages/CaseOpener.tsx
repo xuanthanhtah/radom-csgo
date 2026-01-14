@@ -5,6 +5,7 @@ import LoadingPage from "../components/LoadingPage";
 import type { Item, User, HistoryEntry } from "../types";
 import CaseStrip from "../components/CaseStrip";
 import HistoryList from "../components/HistoryList";
+import TopWinners from "../components/TopWinners";
 import ResultModal from "../components/ResultModal";
 import UserSelector from "../components/UserSelector";
 import supabase from "../lib/supabase";
@@ -21,6 +22,9 @@ export default function CaseOpener(): JSX.Element {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [localUsers, setLocalUsers] = useState<User[]>([]);
   const [tempName, setTempName] = useState("");
+  const [activeTab, setActiveTab] = useState<"history" | "topWinners">(
+    "history"
+  );
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
@@ -435,7 +439,7 @@ export default function CaseOpener(): JSX.Element {
   // If users are loading on first visit and there are no users yet,
   // show a dedicated full-page loading component for a cleaner UX.
   if (usersLoading) {
-    return <LoadingPage message={"Đang tải người dùng..."} />;
+    return <LoadingPage message={"Đang tải dữ liệu..."} />;
   }
 
   return (
@@ -443,7 +447,7 @@ export default function CaseOpener(): JSX.Element {
       {/* Single-page two-column layout: left = main interaction, right = history */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         <div className="basis-[70%]">
-          <Card title="Vòng quay may mắn" className="soft-card w-full">
+          <Card title="Ai sẽ là người đi lấy cơm?" className="soft-card w-full">
             <div className="mb-4">
               <UserSelector
                 users={combinedUsers}
@@ -493,7 +497,7 @@ export default function CaseOpener(): JSX.Element {
                   onClick={onOpen}
                   loading={spinning}
                 >
-                  Mở hòm
+                  Let's Go
                 </Button>
               </div>
               <div className="w-40">
@@ -513,14 +517,43 @@ export default function CaseOpener(): JSX.Element {
         </div>
 
         <div className="basis-[30%]">
-          <Card title="Lịch sử" className="soft-card w-full">
+          <Card className="soft-card w-full">
+            {/* Tab Header */}
+            <div className="flex gap-2 mb-4 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab("history")}
+                className={`flex-1 py-2 px-4 font-semibold transition-all duration-300 border-b-2 ${
+                  activeTab === "history"
+                    ? "border-blue-500 text-blue-600 bg-blue-50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                📜 Lịch sử
+              </button>
+              <button
+                onClick={() => setActiveTab("topWinners")}
+                className={`flex-1 py-2 px-4 font-semibold transition-all duration-300 border-b-2 ${
+                  activeTab === "topWinners"
+                    ? "border-purple-500 text-purple-600 bg-purple-50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                🏆 Top Winners
+              </button>
+            </div>
+
+            {/* Tab Content */}
             <div className="history-panel -mx-4 px-4">
-              <HistoryList
-                history={history}
-                users={combinedUsers}
-                onDeleteEntry={onDeleteEntry}
-                onDeleteAll={onDeleteAll}
-              />
+              {activeTab === "history" ? (
+                <HistoryList
+                  history={history}
+                  users={combinedUsers}
+                  onDeleteEntry={onDeleteEntry}
+                  onDeleteAll={onDeleteAll}
+                />
+              ) : (
+                <TopWinners users={combinedUsers} />
+              )}
             </div>
           </Card>
         </div>
