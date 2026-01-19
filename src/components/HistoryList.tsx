@@ -7,6 +7,7 @@ type Props = {
   users: User[];
   onDeleteEntry?: (entry: HistoryEntry) => void;
   onDeleteAll?: () => void;
+  loading?: boolean;
 };
 
 export default function HistoryList({
@@ -14,6 +15,7 @@ export default function HistoryList({
   users,
   onDeleteEntry,
   onDeleteAll,
+  loading,
 }: Props) {
   // Define gradient colors for history items
   const gradients = [
@@ -45,7 +47,25 @@ export default function HistoryList({
       </div>
 
       {/* History list */}
-      {history.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="relative overflow-hidden rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 p-[2px]"
+            >
+              <div className="bg-white rounded-lg p-3 flex items-center gap-3 animate-pulse">
+                <div className="w-11 h-11 rounded-full bg-gray-200" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-3 w-32 bg-gray-200 rounded" />
+                  <div className="h-3 w-20 bg-gray-200 rounded" />
+                </div>
+                <div className="w-16 h-7 rounded-full bg-gray-200" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : history.length === 0 ? (
         <div className="text-center py-8 text-gray-500">Chưa có lịch sử</div>
       ) : (
         <div className="space-y-2">

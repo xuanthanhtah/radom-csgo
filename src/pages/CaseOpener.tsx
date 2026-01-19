@@ -20,6 +20,7 @@ export default function CaseOpener(): JSX.Element {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Item | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [localUsers, setLocalUsers] = useState<User[]>([]);
   const [tempName, setTempName] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "topWinners">(
@@ -114,6 +115,7 @@ export default function CaseOpener(): JSX.Element {
   };
 
   const fetchHistories = async () => {
+    setHistoryLoading(true);
     try {
       const { start, end } = getWeekBounds();
       const startISO = start.toISOString();
@@ -160,6 +162,8 @@ export default function CaseOpener(): JSX.Element {
     } catch (err) {
       console.error("Unexpected error loading histories", err);
       message.error("Không thể tải lịch sử");
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -438,9 +442,9 @@ export default function CaseOpener(): JSX.Element {
     Math.floor(REPEAT / 2) * items.length * ITEM_STEP - centerOffset;
   // If users are loading on first visit and there are no users yet,
   // show a dedicated full-page loading component for a cleaner UX.
-  if (usersLoading) {
-    return <LoadingPage message={"Đang tải dữ liệu..."} />;
-  }
+  // if (usersLoading) {
+  //   return <LoadingPage message={"Đang tải dữ liệu..."} />;
+  // }
 
   return (
     <div className="p-6 min-w-[640px] mx-auto">
@@ -550,6 +554,7 @@ export default function CaseOpener(): JSX.Element {
                   users={combinedUsers}
                   onDeleteEntry={onDeleteEntry}
                   onDeleteAll={onDeleteAll}
+                  loading={historyLoading}
                 />
               ) : (
                 <TopWinners users={combinedUsers} />

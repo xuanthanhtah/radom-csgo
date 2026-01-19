@@ -1,5 +1,5 @@
 import React from "react";
-import { Avatar, Spin } from "antd";
+import { Avatar } from "antd";
 import type { User, HistoryEntry } from "../types";
 import supabase from "../lib/supabase";
 
@@ -97,9 +97,25 @@ export default function TopWinners({ users }: Props) {
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <Spin size="large" />
-        <div className="mt-2 text-gray-500">Đang tải dữ liệu...</div>
+      <div className="space-y-3">
+        {Array.from({ length: 8 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="relative overflow-hidden rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 p-[2px]"
+          >
+            <div className="bg-white rounded-lg p-3 flex items-center gap-3 animate-pulse">
+              <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gray-200" />
+              </div>
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-200" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="h-3 w-36 bg-gray-200 rounded" />
+                <div className="h-3 w-24 bg-gray-200 rounded" />
+              </div>
+              <div className="flex-shrink-0 w-16 h-8 rounded-full bg-gray-200" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

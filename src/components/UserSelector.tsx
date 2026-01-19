@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Avatar, Empty, Spin } from "antd";
+import { Button, Avatar, Empty } from "antd";
 import type { User } from "../types";
 
 type Props = {
@@ -31,7 +31,36 @@ export default function UserSelector({
     );
   }, [users, searchTerm]);
 
-  if (loading) return <Spin />;
+  if (loading)
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm flex items-center gap-2">
+            <span className="h-3 w-36 rounded bg-gray-200 animate-pulse block" />
+          </div>
+          <div className="flex gap-2">
+            <Button size="small" disabled>
+              Chọn tất cả
+            </Button>
+            <Button size="small" disabled>
+              Bỏ chọn
+            </Button>
+          </div>
+        </div>
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {Array.from({ length: 20 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="w-full p-3 rounded border bg-white border-gray-200 flex flex-col items-center justify-center animate-pulse"
+            >
+              <div className="w-20 h-20 rounded-full bg-gray-200" />
+              <div className="mt-3 h-3 w-24 bg-gray-200 rounded" />
+              <div className="mt-2 h-3 w-16 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
 
   if (!users || users.length === 0)
     return (
