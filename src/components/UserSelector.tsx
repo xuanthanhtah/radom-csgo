@@ -21,14 +21,98 @@ export default function UserSelector({
 }: Props) {
   const [searchTerm, setSearchTerm] = React.useState("");
 
+  // Helper function to remove diacritical marks (supports Vietnamese characters)
+  const removeDiacritics = (str: string): string => {
+    const vietnameseDiacriticsMap: { [key: string]: string } = {
+      à: "a",
+      á: "a",
+      ả: "a",
+      ã: "a",
+      ạ: "a",
+      ă: "a",
+      ằ: "a",
+      ắ: "a",
+      ẳ: "a",
+      ẵ: "a",
+      ặ: "a",
+      â: "a",
+      ầ: "a",
+      ấ: "a",
+      ẩ: "a",
+      ẫ: "a",
+      ậ: "a",
+      đ: "d",
+      è: "e",
+      é: "e",
+      ẻ: "e",
+      ẽ: "e",
+      ẹ: "e",
+      ê: "e",
+      ề: "e",
+      ế: "e",
+      ể: "e",
+      ễ: "e",
+      ệ: "e",
+      ì: "i",
+      í: "i",
+      ỉ: "i",
+      ĩ: "i",
+      ị: "i",
+      ò: "o",
+      ó: "o",
+      ỏ: "o",
+      õ: "o",
+      ọ: "o",
+      ô: "o",
+      ồ: "o",
+      ố: "o",
+      ổ: "o",
+      ỗ: "o",
+      ộ: "o",
+      ơ: "o",
+      ờ: "o",
+      ớ: "o",
+      ở: "o",
+      ỡ: "o",
+      ợ: "o",
+      ù: "u",
+      ú: "u",
+      ủ: "u",
+      ũ: "u",
+      ụ: "u",
+      ư: "u",
+      ừ: "u",
+      ứ: "u",
+      ử: "u",
+      ữ: "u",
+      ự: "u",
+      ỳ: "y",
+      ý: "y",
+      ỷ: "y",
+      ỹ: "y",
+      ỵ: "y",
+    };
+
+    return str
+      .toLowerCase()
+      .split("")
+      .map((char) => vietnameseDiacriticsMap[char] || char)
+      .join("");
+  };
+
   // Filter users based on search term
   const filteredUsers = React.useMemo(() => {
-    if (!searchTerm.trim()) return users;
+    let result = users;
 
-    const lowerSearch = searchTerm.toLowerCase().trim();
-    return users.filter((user) =>
-      user.name.toLowerCase().includes(lowerSearch)
-    );
+    if (searchTerm.trim()) {
+      const lowerSearch = removeDiacritics(searchTerm.toLowerCase().trim());
+      result = users.filter((user) =>
+        removeDiacritics(user.name.toLowerCase()).includes(lowerSearch),
+      );
+    }
+
+    // Sort alphabetically by name
+    return result.sort((a, b) => a.name.localeCompare(b.name, "vi"));
   }, [users, searchTerm]);
 
   if (loading)
@@ -128,6 +212,15 @@ export default function UserSelector({
             Tìm thấy {filteredUsers.length} kết quả
           </div>
         )}
+      </div>
+
+      {/* Selected count */}
+      <div className="mb-3 text-sm text-gray-600">
+        Đã chọn:{" "}
+        <span className="font-semibold text-blue-600">
+          {selectedIds.length}
+        </span>{" "}
+        / {users.length} thành viên
       </div>
 
       <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">

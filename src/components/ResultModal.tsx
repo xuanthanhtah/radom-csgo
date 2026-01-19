@@ -92,7 +92,7 @@ export default function ResultModal({ result, onClose }: Props) {
       open={!!result}
       onCancel={onClose}
       footer={null}
-      title={result?.name || ""}
+      title={`Chúc mừng ${result?.name || ""}!`}
     >
       {result && (
         <div className="relative flex flex-col items-center gap-4">
@@ -120,7 +120,8 @@ export default function ResultModal({ result, onClose }: Props) {
             <div className="w-64 h-64 bg-gray-100" />
           )}
           <div className="text-lg">
-            Người chơi <strong>{result.name}</strong> được chọn
+            Người được chọn để đi lấy cơm là : <strong>{result.name}</strong>{" "}
+            !!!
           </div>
         </div>
       )}
