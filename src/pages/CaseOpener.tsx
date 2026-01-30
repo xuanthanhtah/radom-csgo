@@ -24,7 +24,7 @@ export default function CaseOpener(): JSX.Element {
   const [localUsers, setLocalUsers] = useState<User[]>([]);
   const [tempName, setTempName] = useState("");
   const [activeTab, setActiveTab] = useState<"history" | "topWinners">(
-    "history"
+    "history",
   );
 
   const stripRef = useRef<HTMLDivElement | null>(null);
@@ -41,7 +41,7 @@ export default function CaseOpener(): JSX.Element {
   // Combine DB users and local ad-hoc users so both can be selected for a spin
   const combinedUsers = React.useMemo(
     () => [...users, ...localUsers],
-    [users, localUsers]
+    [users, localUsers],
   );
 
   const items = React.useMemo<Item[]>(
@@ -54,7 +54,7 @@ export default function CaseOpener(): JSX.Element {
           name: u.name,
           image: (u as any).img || u.image || "",
         })),
-    [combinedUsers, selectedIds]
+    [combinedUsers, selectedIds],
   );
 
   // Choose a smaller repeat count when there are very few items so we don't
@@ -98,30 +98,26 @@ export default function CaseOpener(): JSX.Element {
     };
   }, []);
 
-  // Helper: compute start (Monday) and end (Sunday) of current week for resets
-  const getWeekBounds = () => {
+  // Helper: compute start (1st) and end (last day) of current month for resets
+  const getMonthBounds = () => {
     const now = new Date();
-    const date = new Date(now);
-    // JS: 0=Sun,1=Mon,... Normalize so Monday is day 0
-    const day = date.getDay();
-    const diffToMon = (day + 6) % 7; // days since Monday
-    const mon = new Date(date);
-    mon.setDate(date.getDate() - diffToMon);
-    mon.setHours(0, 0, 0, 0);
-    const sun = new Date(mon);
-    sun.setDate(mon.getDate() + 6);
-    sun.setHours(23, 59, 59, 999);
-    return { start: mon, end: sun };
+    // First day of current month
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    firstDay.setHours(0, 0, 0, 0);
+    // Last day of current month
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    lastDay.setHours(23, 59, 59, 999);
+    return { start: firstDay, end: lastDay };
   };
 
   const fetchHistories = async () => {
     setHistoryLoading(true);
     try {
-      const { start, end } = getWeekBounds();
+      const { start, end } = getMonthBounds();
       const startISO = start.toISOString();
       const endISO = end.toISOString();
 
-      // Mark any old histories (before this week's Monday) as inactive=false
+      // Mark any old histories (before this month's 1st) as inactive=false
       // (soft-delete) so we keep rows but hide them from the UI. Also update
       // modify_date so we record when they were hidden.
       try {
@@ -167,16 +163,16 @@ export default function CaseOpener(): JSX.Element {
     }
   };
 
-  // Load histories limited to the current week and remove older week data on startup
+  // Load histories limited to the current month and remove older month data on startup
   useEffect(() => {
     fetchHistories();
   }, []);
 
-  // Note: histories are loaded / trimmed in the startup effect above (filtered to current week)
+  // Note: histories are loaded / trimmed in the startup effect above (filtered to current month)
 
   const toggleSelected = (id: string) => {
     setSelectedIds((s) =>
-      s.includes(id) ? s.filter((x) => x !== id) : [...s, id]
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
     );
   };
 
@@ -298,7 +294,7 @@ export default function CaseOpener(): JSX.Element {
         Math.floor(REPEAT / 2) * items.length +
         Math.max(
           0,
-          items.findIndex((i) => i.name === winner.name)
+          items.findIndex((i) => i.name === winner.name),
         );
       const baseMove = Math.max(0, baseIndex * ITEM_STEP - centerOffset);
       strip.style.transition = "none";
@@ -381,8 +377,8 @@ export default function CaseOpener(): JSX.Element {
       setHistory((h) =>
         h.filter(
           (x) =>
-            !(x.userId === entry.userId && x.created_at === entry.created_at)
-        )
+            !(x.userId === entry.userId && x.created_at === entry.created_at),
+        ),
       );
       message.success("Đã xóa bản ghi");
     } catch (e) {
@@ -394,7 +390,7 @@ export default function CaseOpener(): JSX.Element {
   // Delete all histories for current week
   const onDeleteAll = async () => {
     try {
-      const { start, end } = getWeekBounds();
+      const { start, end } = getMonthBounds();
       // Soft-delete all: mark inactive=false and update modify_date so they
       // won't show in the UI and we record when this happened.
       await supabase
@@ -417,7 +413,7 @@ export default function CaseOpener(): JSX.Element {
   const [containerVisibleWidth, setContainerVisibleWidth] =
     React.useState<number>(
       // safe initial: at least one item width
-      Math.max(ITEM_STEP, Math.min(FIXED_MAX_VISIBLE, 720))
+      Math.max(ITEM_STEP, Math.min(FIXED_MAX_VISIBLE, 720)),
     );
 
   React.useEffect(() => {

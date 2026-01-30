@@ -7,6 +7,7 @@ type WinnerStats = {
   userId: string;
   count: number;
   user?: User;
+  rank?: number;
 };
 
 type Props = {
@@ -70,12 +71,22 @@ export default function TopWinners({ users }: Props) {
         userId,
         count,
         user: users.find((u) => String(u.id) === String(userId)),
-      })
+      }),
     );
 
     // Sort by count descending
     const sorted = stats.sort((a, b) => b.count - a.count);
-    return sorted;
+
+    // Calculate rank based on win count (same count = same rank)
+    let currentRank = 1;
+    const rankedStats = sorted.map((stat, index) => {
+      if (index > 0 && stat.count < sorted[index - 1].count) {
+        currentRank = index + 1;
+      }
+      return { ...stat, rank: currentRank };
+    });
+
+    return rankedStats;
   }, [allHistory, users]);
 
   // Define gradient colors for top 10 winners
@@ -134,8 +145,9 @@ export default function TopWinners({ users }: Props) {
         const displayName = stat.user?.name || "(unknown)";
         const avatarSrc =
           (stat.user && (stat.user.img || stat.user.image)) || undefined;
-        const gradient = gradients[index % gradients.length];
-        const trophy = index < 3 ? trophies[index] : null;
+        const rank = stat.rank || index + 1;
+        const gradient = gradients[(rank - 1) % gradients.length];
+        const trophy = rank <= 3 ? trophies[rank - 1] : null;
 
         return (
           <div
@@ -148,9 +160,7 @@ export default function TopWinners({ users }: Props) {
                 <div
                   className={`w-10 h-10 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md`}
                 >
-                  <span className="text-white font-bold text-lg">
-                    {index + 1}
-                  </span>
+                  <span className="text-white font-bold text-lg">{rank}</span>
                 </div>
               </div>
 

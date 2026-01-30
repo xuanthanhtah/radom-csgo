@@ -42,7 +42,7 @@ export default function HistoryList({
           }}
           disabled={!onDeleteAll || history.length === 0}
         >
-          🗑️ Xóa lịch sử tuần
+          🗑️ Xóa lịch sử tháng
         </button>
       </div>
 
@@ -77,7 +77,7 @@ export default function HistoryList({
 
               // Find user information from the provided users list
               const user = users.find(
-                (u) => String(u.id) === String(entry.userId)
+                (u) => String(u.id) === String(entry.userId),
               );
               const displayName = user?.name || "(unknown)";
               const avatarSrc = (user && (user.img || user.image)) || undefined;
