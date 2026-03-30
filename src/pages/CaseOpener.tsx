@@ -6,6 +6,7 @@ import type { Item, User, HistoryEntry } from "../types";
 import CaseStrip from "../components/CaseStrip";
 import HistoryList from "../components/HistoryList";
 import TopWinners from "../components/TopWinners";
+import MonthlyCountList from "../components/MonthlyCountList";
 import ResultModal from "../components/ResultModal";
 import UserSelector from "../components/UserSelector";
 import supabase from "../lib/supabase";
@@ -23,9 +24,9 @@ export default function CaseOpener(): JSX.Element {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [localUsers, setLocalUsers] = useState<User[]>([]);
   const [tempName, setTempName] = useState("");
-  const [activeTab, setActiveTab] = useState<"history" | "topWinners">(
-    "history",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "history" | "topWinners" | "monthlyCount"
+  >("history");
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
@@ -531,6 +532,16 @@ export default function CaseOpener(): JSX.Element {
                 📜 Lịch sử
               </button>
               <button
+                onClick={() => setActiveTab("monthlyCount")}
+                className={`flex-1 py-2 px-4 font-semibold transition-all duration-300 border-b-2 ${
+                  activeTab === "monthlyCount"
+                    ? "border-green-500 text-green-600 bg-green-50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                📅 Số lần lấy trong tháng
+              </button>
+              <button
                 onClick={() => setActiveTab("topWinners")}
                 className={`flex-1 py-2 px-4 font-semibold transition-all duration-300 border-b-2 ${
                   activeTab === "topWinners"
@@ -544,7 +555,7 @@ export default function CaseOpener(): JSX.Element {
 
             {/* Tab Content */}
             <div className="history-panel -mx-4 px-4">
-              {activeTab === "history" ? (
+              {activeTab === "history" && (
                 <HistoryList
                   history={history}
                   users={combinedUsers}
@@ -552,7 +563,11 @@ export default function CaseOpener(): JSX.Element {
                   onDeleteAll={onDeleteAll}
                   loading={historyLoading}
                 />
-              ) : (
+              )}
+              {activeTab === "monthlyCount" && (
+                <MonthlyCountList history={history} users={combinedUsers} />
+              )}
+              {activeTab === "topWinners" && (
                 <TopWinners users={combinedUsers} />
               )}
             </div>
