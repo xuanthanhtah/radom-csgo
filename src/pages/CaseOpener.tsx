@@ -431,7 +431,11 @@ export default function CaseOpener(): JSX.Element {
             </div>
 
             {/* 3D Interactive CS:GO Case Banner */}
-            <CSCase3D />
+            <CSCase3D
+              isSpinning={spinning}
+              winner={result}
+              onCloseWinner={() => setResult(null)}
+            />
 
             {/* Case Opener Strip Carousel */}
             <div className="pt-2">
@@ -532,8 +536,6 @@ export default function CaseOpener(): JSX.Element {
         </div>
       </div>
 
-      {/* Result Modal */}
-      <ResultModal result={result} onClose={() => setResult(null)} />
     </div>
   );
 }
