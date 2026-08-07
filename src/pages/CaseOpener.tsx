@@ -430,13 +430,6 @@ export default function CaseOpener(): JSX.Element {
               </button>
             </div>
 
-            {/* 3D Interactive CS:GO Case Banner */}
-            <CSCase3D
-              isSpinning={spinning}
-              winner={result}
-              onCloseWinner={() => setResult(null)}
-            />
-
             {/* Case Opener Strip Carousel */}
             <div className="pt-2">
               <div className="text-xs font-semibold text-gray-400 mb-2 flex items-center justify-between">
@@ -536,6 +529,8 @@ export default function CaseOpener(): JSX.Element {
         </div>
       </div>
 
+      {/* Floating 3D Unboxing Modal Overlay - Centered, Transparent Background, Top-Right X Close Button */}
+      <CSCase3D winner={result} onClose={() => setResult(null)} />
     </div>
   );
 }

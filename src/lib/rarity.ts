@@ -14,7 +14,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(176, 195, 217, 0.15)",
     borderColor: "#b0c3d9",
     glowColor: "rgba(176, 195, 217, 0.4)",
-    tag: "CONSUMER",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Industrial Grade",
@@ -22,7 +22,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(94, 152, 217, 0.15)",
     borderColor: "#5e98d9",
     glowColor: "rgba(94, 152, 217, 0.4)",
-    tag: "INDUSTRIAL",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Mil-Spec Grade",
@@ -30,7 +30,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(75, 105, 255, 0.15)",
     borderColor: "#4b69ff",
     glowColor: "rgba(75, 105, 255, 0.4)",
-    tag: "MIL-SPEC",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Restricted",
@@ -38,7 +38,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(136, 71, 255, 0.15)",
     borderColor: "#8847ff",
     glowColor: "rgba(136, 71, 255, 0.4)",
-    tag: "RESTRICTED",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Classified",
@@ -46,7 +46,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(211, 44, 230, 0.15)",
     borderColor: "#d32ce6",
     glowColor: "rgba(211, 44, 230, 0.4)",
-    tag: "CLASSIFIED",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Covert",
@@ -54,7 +54,7 @@ export const RARITIES: RarityGrade[] = [
     bgColor: "rgba(235, 75, 75, 0.18)",
     borderColor: "#eb4b4b",
     glowColor: "rgba(235, 75, 75, 0.5)",
-    tag: "COVERT",
+    tag: "★ SPECIAL ★",
   },
   {
     name: "Exceedingly Rare",
